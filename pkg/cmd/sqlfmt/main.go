@@ -14,22 +14,25 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
 
+	"github.com/cockroachdb/errors"
+
 	"github.com/cockroachdb/cockroach/pkg/sql/parser"
 	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
-	"github.com/cockroachdb/errors"
 )
 
 // TODO: Read flags.
 var (
-	flagLen int
-	flagUseSpaces bool
-	flagTabWidth int
+	flagLen        int
+	flagUseSpaces  bool
+	flagTabWidth   int
 	flagNoSimplify bool
-	flagAlign bool
+	flagAlign      bool
+	flagPath       string
 )
 
 // Goal:
@@ -41,6 +44,7 @@ type SqlfmtCtx struct {
 	tabWidth   int
 	noSimplify bool
 	align      bool
+	formatPath string
 }
 
 func runSQLFmt(sqlfmtCtx SqlfmtCtx) error {
@@ -82,14 +86,28 @@ func runSQLFmt(sqlfmtCtx SqlfmtCtx) error {
 	return nil
 }
 
-
-
 func main() {
+	flag.IntVar(&flagLen, "len", 4, "len")
+	flag.BoolVar(&flagUseSpaces, "use-spaces", true, "use spaces")
+	flag.IntVar(&flagTabWidth, "tab-width", 4, "tab width")
+	flag.BoolVar(&flagNoSimplify, "no-simplify", false, "no simplify")
+	flag.BoolVar(&flagAlign, "align", true, "align")
+
+	flag.Parse()
+
+	if flag.NArg() != 1 { // Expect one arg.
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	formatPath := flag.Arg(1)
+
 	runSQLFmt(SqlfmtCtx{
-		len: 80,
-		useSpaces: true,
-		tabWidth: 2,
-		noSimplify: true,
-		align: true,
+		len:        flagLen,
+		useSpaces:  flagUseSpaces,
+		tabWidth:   flagTabWidth,
+		noSimplify: flagNoSimplify,
+		align:      flagAlign,
+		formatPath: formatPath,
 	})
 }
